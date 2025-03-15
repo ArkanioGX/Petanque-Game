@@ -3,6 +3,7 @@
 #include "code/Renderer/model.h"
 #include "code/Math/Quat.h"
 
+
 class Body
 {
 public:
@@ -14,6 +15,8 @@ public:
 	float elasticity;
 	float inverseMass;
 	float friction;
+
+	
 
 
 	Vec3 GetCenterOfMassWorldSpace() const;

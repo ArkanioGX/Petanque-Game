@@ -79,7 +79,7 @@ void Application::Initialize() {
 	m_models.reserve( scene->bodies.size() );
 	for ( int i = 0; i < scene->bodies.size(); i++ ) {
 		Model * model = new Model();
-		model->BuildFromShape( scene->bodies[ i ].shape );
+		model->BuildFromShape( scene->bodies[ i ]->shape );
 		model->MakeVBO( &deviceContext );
 
 		m_models.push_back( model );
@@ -91,7 +91,7 @@ void Application::Initialize() {
 	m_cameraRadius = 15.0f;
 	m_cameraFocusPoint = Vec3( 0, 0, 3 );
 
-	m_isPaused = true;
+	m_isPaused = false;
 	m_stepFrame = false;
 }
 
@@ -374,7 +374,7 @@ Application::MouseMoved
 ====================================================
 */
 void Application::MouseMoved( float x, float y ) {
-	Vec2 newPosition = Vec2( x, y );
+	Vec2 newPosition = Vec2( -x, y );
 	Vec2 ds = newPosition - m_mousePosition;
 	m_mousePosition = newPosition;
 
@@ -437,6 +437,14 @@ void Application::Keyboard( int key, int scancode, int action, int modifiers ) {
 	if ( GLFW_KEY_Y == key && ( GLFW_PRESS == action || GLFW_REPEAT == action ) ) {
 		m_stepFrame = m_isPaused && !m_stepFrame;
 	}
+	if (GLFW_KEY_SPACE == key && GLFW_RELEASE == action) {
+		Vec3 camPos;
+		camPos.x = cosf(m_cameraPositionPhi) * sinf(m_cameraPositionTheta);
+		camPos.y = sinf(m_cameraPositionPhi) * sinf(m_cameraPositionTheta);
+		camPos.z = cosf(m_cameraPositionTheta);
+		camPos.Normalize();
+		scene->launchCurrentBall(camPos*-1);
+	}
 }
 
 /*
@@ -460,7 +468,7 @@ void Application::MainLoop() {
 			time = GetTimeMicroseconds();
 		}
 		timeLastFrame = time;
-		printf( "\ndt_ms: %.1f    ", dt_us * 0.001f );
+		//printf( "\ndt_ms: %.1f    ", dt_us * 0.001f );
 
 		// Get User Input
 		glfwPollEvents();
@@ -502,7 +510,7 @@ void Application::MainLoop() {
 			avgTime = ( avgTime * float( numSamples ) + dt_us ) / float( numSamples + 1 );
 			numSamples++;
 
-			printf( "frame dt_ms: %.2f %.2f %.2f", avgTime * 0.001f, maxTime * 0.001f, dt_us * 0.001f );
+			//printf( "frame dt_ms: %.2f %.2f %.2f", avgTime * 0.001f, maxTime * 0.001f, dt_us * 0.001f );
 		}
 
 		// Draw the Scene
@@ -549,9 +557,9 @@ void Application::UpdateUniforms() {
 			camPos.z = cosf( m_cameraPositionTheta );
 			camPos *= m_cameraRadius;
 
-			camPos += m_cameraFocusPoint;
+			camPos += scene->CameraCenter;
 
-			camLookAt = m_cameraFocusPoint;
+			camLookAt = scene->CameraCenter;
 
 			int windowWidth;
 			int windowHeight;
@@ -617,13 +625,13 @@ void Application::UpdateUniforms() {
 		//	Update the uniform buffer with the body positions/orientations
 		//
 		for ( int i = 0; i < scene->bodies.size(); i++ ) {
-			Body & body = scene->bodies[ i ];
+			Body* body = scene->bodies[ i ];
 
-			Vec3 fwd = body.orientation.RotatePoint( Vec3( 1, 0, 0 ) );
-			Vec3 up = body.orientation.RotatePoint( Vec3( 0, 0, 1 ) );
+			Vec3 fwd = body->orientation.RotatePoint( Vec3( 1, 0, 0 ) );
+			Vec3 up = body->orientation.RotatePoint( Vec3( 0, 0, 1 ) );
 
 			Mat4 matOrient;
-			matOrient.Orient( body.position, fwd, up );
+			matOrient.Orient( body->position, fwd, up );
 			matOrient = matOrient.Transpose();
 
 			// Update the uniform buffer with the orientation of this body
@@ -633,8 +641,8 @@ void Application::UpdateUniforms() {
 			renderModel.model = m_models[ i ];
 			renderModel.uboByteOffset = uboByteOffset;
 			renderModel.uboByteSize = sizeof( matOrient );
-			renderModel.pos = body.position;
-			renderModel.orient = body.orientation;
+			renderModel.pos = body->position;
+			renderModel.orient = body->orientation;
 			m_renderModels.push_back( renderModel );
 
 			uboByteOffset += deviceContext.GetAligendUniformByteOffset( sizeof( matOrient ) );

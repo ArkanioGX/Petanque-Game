@@ -55,6 +55,17 @@ void Contact::ResolveContact(Contact& contact)
 	a->ApplyImpulse(ptOnA, impulseFriction * -1.0f);
 	b->ApplyImpulse(ptOnB, impulseFriction * 1.0f);
 
+	//Apply Friction (TEMPORARY FIX)
+	//a->ApplyImpulseLinear((a->linearVelocity * friction) * -1);
+	//a->ApplyImpulseAngular((a->angularVelocity * (friction)) * -1);
+
+	//b->ApplyImpulseLinear((b->linearVelocity * friction) * -1);
+	//b->ApplyImpulseAngular((b->angularVelocity * (friction)) * -1);
+
+
+	
+	
+
 	// If object are interpenetrating, use this to set them on contact
 	if (contact.timeOfImpact == 0.0f)
 	{

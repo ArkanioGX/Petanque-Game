@@ -103,7 +103,17 @@ void Body::Update(const float dt_sec)
 
 	Vec3 alpha = inertiaTensor.Inverse() * (angularVelocity.Cross(inertiaTensor * angularVelocity));
 
-	angularVelocity += alpha * dt_sec;
+	
+
+	angularVelocity += alpha * dt_sec ;
+
+	//Stop when near zero
+	if (linearVelocity.GetMagnitude() < 0.4) {
+		//linearVelocity.Zero();
+		//angularVelocity.Zero();
+	}
+	
+
 	// Update orientation
 	Vec3 dAngle = angularVelocity * dt_sec;
 	Quat dq = Quat(dAngle, dAngle.GetMagnitude());
